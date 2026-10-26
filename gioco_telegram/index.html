@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Tracking</title>
+    <style>
+        body {
+            background-color: #050806;
+            color: #00ff66;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            margin: 0;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Effetto linee di scansione TV / CRT */
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 999;
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+        }
+
+        /* Effetto tremolio / glitch del testo */
+        @keyframes flicker {
+            0% { opacity: 0.9; }
+            50% { opacity: 1; text-shadow: 2px 0 #ff0033, -2px 0 #00ffff; }
+            100% { opacity: 0.95; }
+        }
+
+        .container {
+            max-width: 100%;
+            margin-top: 10px;
+            animation: flicker 0.15s infinite;
+        }
+
+        .alert {
+            color: #ff3333;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .box {
+            border: 1px dashed #ff3333;
+            padding: 15px;
+            margin-top: 15px;
+            background: rgba(255, 51, 51, 0.03);
+            box-shadow: inset 0 0 10px rgba(255, 0, 0, 0.2);
+        }
+
+        code {
+            background: rgba(0, 255, 102, 0.1);
+            padding: 2px 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="alert">⚠️ [ANOMALIA DI RETE RILEVATA]</div>
+        <p>Decrittazione stream geospaziale in corso...</p>
+        
+        <div class="box" id="geo-data">
+            Sincronizzazione satellitare...
+        </div>
+    </div>
+
+    <script>
+        const geoBox = document.getElementById('geo-data');
+
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const acc = position.coords.accuracy;
+                    
+                    geoBox.innerHTML = `
+                        <b>STATUS:</b> TARGET AGGANCIATO<br><br>
+                        LAT: <code>${lat}</code><br>
+                        LON: <code>${lon}</code><br>
+                        ACCURATEZZA: ~${Math.round(acc)}m<br><br>
+                        <span style="color: #ff3333; font-weight: bold;">>> SEGNALE INTERCETTATO DALLA RETE OSTILE.</span>
+                    `;
+                },
+                (error) => {
+                    geoBox.innerHTML = `
+                        <span style='color: #ff3333;'>❌ SEGNALE GPS OSCURATO O DISTURBATO</span><br><br>
+                        <b>AREA:</b> TRAPANI (SETTORE CENTRO)<br>
+                        <b>STATUS:</b> TRACCIAMENTO RADIOATTIVO IN CORSO...
+                    `;
+                },
+                { enableHighAccuracy: true }
+            );
+        } else {
+            geoBox.innerHTML = "Errore hardware: geolocalizzazione non compatibile.";
+        }
+    </script>
+</body>
+</html>

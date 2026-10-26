@@ -1,0 +1,2 @@
+$env:BOT_TOKEN_INTRUSO="8840678686:AAG5ovl312PXd9T3H4APBrYtYqBbot6yP2o"
+python intruso.py
