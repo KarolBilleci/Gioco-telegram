@@ -16,7 +16,7 @@ img = qrcode.make(url_inizio, box_size=14, border=4)
 img.save("QRCode/inizio.png")
 print(f"Generato: {url_inizio}")
 
-# 2. I 4 QR code per le tappe/audio (da 1 a 4)
+# 2. I 4 QR code per le tappe (da 1 a 4)
 for i in range(1, 5):
     url = f"https://t.me/{username}?start={i}"
     img = qrcode.make(url, box_size=14, border=4)
