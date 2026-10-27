@@ -127,7 +127,7 @@ PUNTI = [
     (
         "PUNTO 09 // Estrazione Totale",
         "Torre di Ligny (Punta Estrema)",
-        None,
+        "38.019625, 12.496938",
         [
             "⚡ [SINCRONIZZAZIONE COMPLETATA AL 100%]",
             "«Avete pulito i settori. Avete tenuto aperta la frequenza fino all'ultimo respiro... La realtà torna a respirare.»",
@@ -179,108 +179,30 @@ async def invia_punto(bot, chat_id, indice):
     )
 
 
-# ---------------- GESTIONE INTERATTIVA, MANOVRA EVASIVA E INTRUSIONE ----------------
+# ---------------- GESTIONE INTERATTIVA E PULSANTI ----------------
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
     data = query.data
 
-    if data == "safe_8":
-        msg_attesa = await query.message.reply_text(
-            "🔄 <i>Verifica frequenze radio e bonifica area in corso...</i>", 
-            parse_mode=ParseMode.HTML
-        )
-        await asyncio.sleep(5)
-        await msg_attesa.delete()
-        
-        await query.message.reply_text(
-            "<i>«Ok... sembra che se ne siano andati. La via a piedi è libera verso Cala Venezia, ma... un momento. Il terminale sta ricevendo un flusso di dati anomalo...»</i>",
-            parse_mode=ParseMode.HTML
-        )
-        await asyncio.sleep(4)
-
-        url_intruso = "https://t.me/SoggettoIntrusoBot?start=intercettazione"
-        tastiera_intruso = InlineKeyboardMarkup([
-            [InlineKeyboardButton("⚠️ CANALE INTERCETTATO - ISPEZIONA", url=url_intruso)]
-        ])
-
-        await query.message.reply_text(
-            "🔴 <b>[ALLARME: SEGNALE DIROTTATO]</b>\n\n"
-            "<code>[ERRORE 0x889 - FREQUENZA COMPROMESSA]</code>\n"
-            "<i>Il protocollo Valenti è stato bloccato da una sorgente esterna. Cliccate sul pulsante sotto per analizzare l'intrusione.</i>",
-            parse_mode=ParseMode.HTML,
-            reply_markup=tastiera_intruso
-        )
-        return
-
     if data.startswith("next_"):
         indice = int(data.split("_")[1])
-        
-        resta = context.chat_data.get("audio_fino", 0) - time.time()
-        if resta > 0:
-            await query.message.reply_text("⚠️ Interferenza radio in corso! Aspetta la fine dell'audio.")
-            return
 
         msg_attesa = await query.message.reply_text("🔄 <i>Decifrazione coordinate in corso... Sincronizzazione frequenza...</i>", parse_mode=ParseMode.HTML)
         await asyncio.sleep(10)
         await msg_attesa.delete()
 
-        if indice == 7: 
-            await query.message.reply_text(
-                "🚨 <b>ATTENZIONE: UNITÀ OSTILE IN AVVICINAMENTO</b> 🚨\n\n"
-                "<code>[ALLARME PROSSIMITÀ: TRACCIAMENTO ATTIVO]</code>\n"
-                "<i>«Non muovetevi! Vi stanno passando accanto. Spegnete la torcia del telefono!»</i>",
-                parse_mode=ParseMode.HTML
-            )
-            await asyncio.sleep(4)
-            
-            percorso_foto = os.path.join(CARTELLA, "minaccia.jpg")
-            if os.path.exists(percorso_foto):
-                with open(percorso_foto, "rb") as foto_file:
-                    await context.bot.send_photo(
-                        query.message.chat_id,
-                        photo=foto_file,
-                        caption="🔴 <b>NON GIRATEVI. Lasciateli sfilare lungo il muro opposto.</b>",
-                        parse_mode=ParseMode.HTML
-                    )
-            await asyncio.sleep(3)
-
-            tastiera_fuga = InlineKeyboardMarkup([
-                [InlineKeyboardButton("🛡️ La costa è pulita, conferma la sicurezza", callback_data="safe_8")]
-            ])
-            
-            await query.message.reply_text(
-                "🏃‍♂️ <b>MANOVRA EVASIVA IN CORSO:</b>\n\n"
-                "<i>Intrufolatevi nel vicolo cieco sulla destra, premete le spalle contro la pietra e attendete trenta secondi in silenzio.</i>\n\n"
-                "Appena il pericolo si è allontanato, confermate la vostra posizione qui sotto.",
-                parse_mode=ParseMode.HTML,
-                reply_markup=tastiera_fuga
-            )
-            return 
-
         await invia_punto(context.bot, query.message.chat_id, indice)
 
 
-# ---------------- AUDIO ----------------
-async def manda_audio(update: Update, context: ContextTypes.DEFAULT_TYPE, n: int):
-    chat_id = update.effective_chat.id
-    voce = AUDIO.get(n)
-    percorso = os.path.join(CARTELLA, "audio", voce[0]) if voce else None
-    if not percorso or not os.path.exists(percorso):
-        await update.message.reply_text("Codice non riconosciuto.")
-        return
-    with open(percorso, "rb") as f:
-        await context.bot.send_voice(chat_id, voice=f)
-    context.chat_data["audio_fino"] = time.time() + voce[1] + 2
-
-
-# ---------------- COMANDI PRINCIPALI ----------------
+# ---------------- COMANDO START AGGIORNATO ----------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     
     if context.args:
         codice = context.args[0]
+        # Controlla se il parametro passato è un numero intero (es. 0, 1, 2...)
         if codice.isdigit():
             punto_indice = int(codice)
             if 0 <= punto_indice < len(PUNTI):
@@ -293,20 +215,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await asyncio.sleep(2)
                 await invia_punto(context.bot, chat_id, punto_indice)
                 return
-        elif codice.startswith("audio") and codice[5:].isdigit():
-            numero_audio = int(codice[5:])
-            await manda_audio(update, context, numero_audio)
-            punto_indice = numero_audio - 1
-            if 0 <= punto_indice < len(PUNTI):
-                context.chat_data["punto_attuale"] = punto_indice
-                await context.bot.send_message(
-                    chat_id, 
-                    "⚡ <i>Riconnessione al canale di Valenti stabilita. Ripresa protocollo in corso...</i>", 
-                    parse_mode=ParseMode.HTML
-                )
-                await asyncio.sleep(2)
-                await invia_punto(context.bot, chat_id, punto_indice)
-            return
 
     testo_intro = (
         "🔴 <b>[CANALE DI EMERGENZA ATTIVATO]</b>\n\n"
@@ -320,7 +228,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.chat_data.pop("audio_fino", None)
     context.chat_data.pop("punto_attuale", None)
     await update.message.reply_text("Missione azzerata. Usa /start per ricominciare.")
 
