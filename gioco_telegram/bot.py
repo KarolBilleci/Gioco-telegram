@@ -219,4 +219,44 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         resta = context.chat_data.get("audio_fino", 0) - time.time()
         if resta > 0:
-            await query.message.
+            await query.message.reply_text("⚠️ Interferenza radio in corso! Aspetta la fine dell'audio.")
+            return
+
+        msg_attesa = await query.message.reply_text("🔄 <i>Decifrazione coordinate in corso... Sincronizzazione frequenza...</i>", parse_mode=ParseMode.HTML)
+        await asyncio.sleep(10)
+        await msg_attesa.delete()
+
+        if indice == 7: 
+            await query.message.reply_text(
+                "🚨 <b>ATTENZIONE: UNITÀ OSTILE IN AVVICINAMENTO</b> 🚨\n\n"
+                "<code>[ALLARME PROSSIMITÀ: TRACCIAMENTO ATTIVO]</code>\n"
+                "<i>«Non muovetevi! Vi stanno passando accanto. Spegnete la torcia del telefono!»</i>",
+                parse_mode=ParseMode.HTML
+            )
+            await asyncio.sleep(4)
+            
+            percorso_foto = os.path.join(CARTELLA, "minaccia.jpg")
+            if os.path.exists(percorso_foto):
+                with open(percorso_foto, "rb") as foto_file:
+                    await context.bot.send_photo(
+                        query.message.chat_id,
+                        photo=foto_file,
+                        caption="🔴 <b>NON GIRATEVI. Lasciateli sfilare lungo il muro opposto.</b>",
+                        parse_mode=ParseMode.HTML
+                    )
+            await asyncio.sleep(3)
+
+            tastiera_fuga = InlineKeyboardMarkup([
+                [InlineKeyboardButton("🛡️ La costa è pulita, conferma la sicurezza", callback_data="safe_8")]
+            ])
+            
+            await query.message.reply_text(
+                "🏃‍♂️ <b>MANOVRA EVASIVA IN CORSO:</b>\n\n"
+                "<i>Intrufolatevi nel vicolo cieco sulla destra, premete le spalle contro la pietra e attendete trenta secondi in silenzio.</i>\n\n"
+                "Appena il pericolo si è allontanato, confermate la vostra posizione qui sotto.",
+                parse_mode=ParseMode.HTML,
+                reply_markup=tastiera_fuga
+            )
+            return 
+
+        await invia_punto(context.bot, query.message.chat_id, indice)
